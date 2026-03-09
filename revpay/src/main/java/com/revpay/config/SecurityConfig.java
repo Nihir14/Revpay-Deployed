@@ -47,14 +47,15 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOrigins(List.of("http://localhost:4200"));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        // FIXED: Added your new permanent AWS Elastic IP!
+        configuration.setAllowedOrigins(List.of(
+                "http://localhost:4200",
+                "http://3.6.117.109"
+        ));
 
-        // CRITICAL FIX: Added "Idempotency-Key" so the frontend can send it without CORS blocking
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Idempotency-Key"));
         configuration.setAllowCredentials(true);
-
-        // Added caching for preflight requests (improves frontend performance)
         configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
