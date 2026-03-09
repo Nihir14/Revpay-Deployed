@@ -1,0 +1,12 @@
+{
+  "success" : false,
+  "message" : "Bad credentials",
+  "errorCode" : "GEN_ERR",
+  "data" : {
+    "errorCode" : "GEN_ERR",
+    "message" : "Bad credentials",
+    "path" : "/api/v1/auth/login",
+    "timestamp" : "2026-02-27T00:33:57"
+  },
+  "timestamp" : "2026-02-27T00:33:57"
+}

@@ -1,0 +1,15 @@
+{
+  "success" : true,
+  "message" : "Login successful",
+  "data" : {
+    "token" : "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbkByZXZwYXkuY29tIiwiaWF0IjoxNzcyMDg1OTc4LCJleHAiOjE3NzIxNzIzNzh9.rmsBoh03Nj7zTnXLWYq_0BkZY7GU_z83z99byEXkJwk",
+    "type" : "Bearer",
+    "refreshToken" : null,
+    "userId" : 1,
+    "email" : "admin@revpay.com",
+    "fullName" : null,
+    "roles" : [ "ROLE_ADMIN" ],
+    "expiresIn" : null
+  },
+  "timestamp" : "2026-02-26T11:36:18"
+}
