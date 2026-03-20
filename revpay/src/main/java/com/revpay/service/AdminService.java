@@ -1,6 +1,7 @@
 package com.revpay.service;
 
 import com.revpay.exception.ResourceNotFoundException;
+import com.revpay.model.entity.BusinessProfile;
 import com.revpay.model.entity.Role;
 import com.revpay.model.entity.Transaction;
 import com.revpay.model.entity.User;
@@ -43,14 +44,42 @@ public class AdminService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
 
-        // Let's protect the ADMIN role from being deactivated by another admin or
-        // themselves accidentally via the UI.
+        // Protect the ADMIN role from being deactivated
         if (user.getRole() == Role.ADMIN) {
             throw new IllegalStateException("Cannot change the status of an ADMIN user via this endpoint.");
         }
 
         user.setActive(isActive);
         return userRepository.save(user);
+    }
+
+    // --- BUSINESS VERIFICATION LOGIC ---
+
+    @Transactional
+    public void verifyBusinessAccount(Long profileId) {
+        log.info("Admin verifying business profile ID: {}", profileId);
+
+        // 1. Fetch the business profile
+        BusinessProfile profile = businessProfileRepository.findById(profileId)
+                .orElseThrow(() -> new ResourceNotFoundException("Business profile not found with ID: " + profileId));
+
+        if (profile.isVerified()) {
+            throw new IllegalArgumentException("Business is already verified.");
+        }
+
+        // 2. Verify the Business Profile
+        profile.setVerified(true);
+        businessProfileRepository.save(profile);
+
+        // 3. Fetch the underlying User
+        User user = profile.getUser();
+
+        // 4. Mark the User as VERIFIED and ACTIVE
+        user.setVerified(true);
+        user.setActive(true);
+        userRepository.save(user);
+
+        log.info("Successfully verified Business Profile ID: {} and activated User ID: {}", profileId, user.getUserId());
     }
 
     // --- TRANSACTION MONITORING ---
@@ -72,18 +101,7 @@ public class AdminService {
         long activeBusinesses = businessProfileRepository.count();
         long totalTransactions = transactionRepository.count();
 
-        // Calculate total transaction volume (sum of all COMPLETED SEND and PAYMENT
-        // transactions).
-        // For simplicity and performance, we'll let JPA handle it if possible, but an
-        // explicit query is better for large datasets.
-        // For now, we will aggregate locally for MVP or provide an estimate if the DB
-        // is too large.
-        // Given we don't have a specific JPQL query for volume in TransactionRepository
-        // right now,
-        // we will fetch all completed transactions. IN A REAL PROD ENVIRONMENT, this
-        // should be a DB SUM query.
-
-        // This is a simplified volume calculation for the MVP Dashboard
+        // Calculate total transaction volume
         BigDecimal estimatedVolume = transactionRepository.findAll().stream()
                 .filter(t -> t.getStatus() == Transaction.TransactionStatus.COMPLETED)
                 .filter(t -> t.getType() == Transaction.TransactionType.SEND
@@ -94,18 +112,18 @@ public class AdminService {
         // Calculate Admin Wallet Balance
         BigDecimal adminWalletBalance = BigDecimal.ZERO;
         User adminUser = userRepository.findByRole(Role.ADMIN).stream().findFirst().orElse(null);
+
         if (adminUser != null) {
             com.revpay.model.entity.Wallet adminWallet = adminUser.getWallet();
-            // If the LAZY relationship isn't initialized or not available directly, we fetch via repository
             if (adminWallet != null) {
                 adminWalletBalance = adminWallet.getBalance();
             } else {
                 adminWalletBalance = walletRepository.findByUser(adminUser)
-                    .map(com.revpay.model.entity.Wallet::getBalance)
-                    .orElse(BigDecimal.ZERO);
+                        .map(com.revpay.model.entity.Wallet::getBalance)
+                        .orElse(BigDecimal.ZERO);
             }
         }
-        
+
         Map<String, Object> analytics = new HashMap<>();
         analytics.put("totalUsers", totalUsers);
         analytics.put("activeBusinesses", activeBusinesses);
