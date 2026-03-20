@@ -192,5 +192,6 @@ public class AdminController {
         public ResponseEntity<ApiResponse<java.util.Map<String, Object>>> getAnalytics() {
                 return ResponseEntity
                         .ok(ApiResponse.success(adminService.getSystemAnalytics(), "System metrics retrieved"));
+
         }
 }
